@@ -1,0 +1,901 @@
+openapi: 3.1.0
+info:
+  title: Backend API
+  version: 0.0.1
+servers:
+  - url: http://localhost:4000
+    description: Local development server
+
+tags:
+  - name: region
+    description: Region management and retrieval
+  - name: rule
+    description: Rule management and retrieval
+  - name: condition
+    description: Condition management and retrieval
+  - name: evaluation
+    description: Region evaluation and analysis
+  - name: user
+    description: User management and preferences
+  - name: answer
+    description: Answer submission and management
+  - name: Presence
+    description: Presence management and retrieval
+
+components:
+  securitySchemes:
+    userHeader:
+      type: apiKey
+      in: header
+      name: X-User-ID
+      description: User ID for authentication
+
+  schemas:
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+        parentRegionId:
+          type: string
+          nullable: true
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/RegionType'
+        continent:
+          $ref: '#/components/schemas/Continent'
+        yearStartMonth:
+          type: integer
+        yearStartDay:
+          type: integer
+        latLng:
+          type: array
+          items:
+            type: number
+          maxItems: 2
+      required:
+        - id
+        - name
+        - type
+        - continent
+        - yearStartMonth
+        - yearStartDay
+        - latLng
+
+    RegionType:
+      type: string
+      enum: [country, state, province, territory, other]
+
+    Continent:
+      type: string
+      enum: [Africa, Antarctica, Asia, Europe, NorthAmerica, Oceania, SouthAmerica]
+
+    Rule:
+      type: object
+      required:
+        - id
+        - regionId
+        - name
+        - description
+        - ruleType
+        - periodType
+        - threshold
+      properties:
+        id:
+          type: string
+          format: uuid
+        regionId:
+          type: string
+          minLength: 2
+          maxLength: 5
+        name:
+          type: string
+        description:
+          type: string
+        ruleType:
+          type: string
+          enum: [aggregate, average, weighted, consecutive]
+        periodType:
+          type: string
+          enum: [fiscal_year, rolling]
+        threshold:
+          type: integer
+          minimum: 0
+
+    Condition:
+      type: object
+      required:
+        - id
+        - ruleId
+        - prompt
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        ruleId:
+          type: string
+          format: uuid
+        prompt:
+          type: string
+        type:
+          type: string
+          enum: [boolean, integer, select, multi_select]
+        comparator:
+          type: string
+          enum: [eq, neq, gt, gte, lt, lte, contains, in, not_in]
+        expected:
+          type: object
+
+    Answer:
+      type: object
+      required:
+        - userId
+        - conditionId
+        - value
+      properties:
+        userId:
+          type: string
+          format: uuid
+        conditionId:
+          type: string
+          format: uuid
+        value:
+          type: object
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "398114"
+        favoriteRegions:
+          type: array
+          items:
+            type: string
+          example: ["JE", "GB"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - favoriteRegions
+        - createdAt
+        - updatedAt
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Error message"
+      required:
+        - message
+
+    RegionEvaluation:
+      type: object
+      required:
+        - userId
+        - regionId
+        - passed
+        - region
+        - ruleEvaluations
+        - evaluatedAt
+        - conditions
+        - answers
+      properties:
+        userId:
+          type: string
+        regionId:
+          type: string
+        passed:
+          type: boolean
+        region:
+          $ref: '#/components/schemas/Region'
+        ruleEvaluations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleEvaluation'
+        evaluatedAt:
+          type: string
+          format: date-time
+        conditions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Condition'
+          description: Map of condition ID to condition details
+        answers:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Answer'
+          description: Map of condition ID to answer details
+
+    RuleEvaluation:
+      type: object
+      required:
+        - passed
+        - count
+        - remaining
+        - start
+        - end
+        - consecutiveEnd
+        - rule
+        - conditionEvaluations
+      properties:
+        passed:
+          type: boolean
+        count:
+          type: integer
+        remaining:
+          type: integer
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        consecutiveEnd:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+        rule:
+          $ref: '#/components/schemas/Rule'
+        conditionEvaluations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionEvaluation'
+
+    ConditionEvaluation:
+      type: object
+      required:
+        - passed
+        - skipped
+        - conditionId
+      properties:
+        passed:
+          type: boolean
+        skipped:
+          type: boolean
+        expected:
+          type: object
+        actual:
+          type: object
+        conditionId:
+          type: string
+          format: uuid
+          description: Reference to the condition in the conditions map
+        condition:
+          $ref: '#/components/schemas/Condition'
+        answer:
+          $ref: '#/components/schemas/Answer'
+
+    Presence:
+      type: object
+      description: Represents a user's presence in a region on a specific date
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The ID of the user
+        regionId:
+          type: string
+          minLength: 2
+          maxLength: 5
+          description: The ID of the region
+        date:
+          type: string
+          format: date
+          description: The date of presence
+        deviceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional ID of the device that recorded the presence
+      required:
+        - userId
+        - regionId
+        - date
+
+    CreatePresenceRequest:
+      type: object
+      description: Request to create a presence record for a date range
+      properties:
+        regionId:
+          type: string
+          minLength: 2
+          maxLength: 5
+          description: The ID of the region
+        start:
+          type: string
+          format: date
+          description: Start date of presence (inclusive)
+        end:
+          type: string
+          format: date
+          description: End date of presence (inclusive)
+        deviceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional ID of the device that recorded the presence
+      required:
+        - regionId
+        - start
+        - end
+
+    DeletePresenceRequest:
+      type: object
+      description: Request to delete presence records for a date range
+      properties:
+        regionId:
+          type: string
+          minLength: 2
+          maxLength: 5
+          description: The ID of the region
+        start:
+          type: string
+          format: date
+          description: Start date of presence to delete (inclusive)
+        end:
+          type: string
+          format: date
+          description: End date of presence to delete (inclusive)
+        deviceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional ID of the device that recorded the presence
+      required:
+        - regionId
+        - start
+        - end
+
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+paths:
+  /region:
+    get:
+      tags:
+        - region
+      summary: List all regions
+      responses:
+        '200':
+          description: A list of regions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Region'
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /region/{id}:
+    get:
+      tags:
+        - region
+      summary: Get a region by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A region object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '404':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /rule:
+    get:
+      tags:
+        - rule
+      summary: List rules
+      description: Get a list of rules for specified regions
+      parameters:
+        - name: regionId
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              minLength: 2
+              maxLength: 5
+      responses:
+        '200':
+          description: List of rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+        '400':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /rule/{ruleId}:
+    get:
+      tags:
+        - rule
+      summary: Get rule by ID
+      description: Get a specific rule by its ID
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Rule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /condition:
+    get:
+      tags:
+        - condition
+      summary: List conditions
+      description: Get a list of conditions for specified rules
+      parameters:
+        - name: ruleId
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: List of conditions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Condition'
+        '400':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /condition/{conditionId}:
+    get:
+      tags:
+        - condition
+      summary: Get condition by ID
+      description: Get a specific condition by its ID
+      parameters:
+        - name: conditionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Condition details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Condition'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /answer:
+    post:
+      tags:
+        - answer
+      summary: Submit an answer
+      description: Submit an answer for a condition
+      security:
+        - userHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - conditionId
+                - value
+              properties:
+                conditionId:
+                  type: integer
+                value:
+                  oneOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+                    - type: object
+                    - type: array
+      responses:
+        '200':
+          description: Answer submitted successfully
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /answer/{conditionId}:
+    get:
+      tags:
+        - answer
+      summary: Get an answer
+      description: Get an answer for a condition
+      security:
+        - userHeader: []
+      parameters:
+        - name: conditionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Answer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+    delete:
+      tags:
+        - answer
+      summary: Delete an answer
+      description: Delete an answer for a condition
+      security:
+        - userHeader: []
+      parameters:
+        - name: conditionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Answer deleted successfully
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /evaluate/{regionId}:
+    get:
+      tags:
+        - evaluation
+      summary: Evaluate a region
+      description: Evaluate a region based on its rules and conditions
+      security:
+        - userHeader: []
+      parameters:
+        - name: regionId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 5
+        - name: pointInTime
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Region evaluated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegionEvaluation'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /user:
+    get:
+      tags:
+        - user
+      summary: Get current user
+      security:
+        - userHeader: []
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Error'
+
+    post:
+      tags:
+        - user
+      summary: Create a new user
+      security:
+        - userHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - favoriteRegions
+              properties:
+                favoriteRegions:
+                  type: array
+                  items:
+                    type: string
+                  description: Initial list of favorite region IDs.
+                  example: ["JE", "GB"]
+                wantResidency:
+                  type: array
+                  items:
+                    type: string
+                  description: List of regions the user wants to reside in.
+                  example: ["JE", "GB"]
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+
+    put:
+      tags:
+        - user
+      summary: Update user details
+      description: |
+        Updates the user's details. The request body should contain the complete set of favorite regions
+        that should be saved. Any regions not included in the request will be removed.
+      security:
+        - userHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - favoriteRegions
+              properties:
+                favoriteRegions:
+                  type: array
+                  items:
+                    type: string
+                  description: Complete list of favorite region IDs. Any regions not included will be removed.
+                  example: ["JE", "GB"]
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /presence/{regionId}/{date}:
+    get:
+      summary: Get presence for a region on a specific date
+      description: Retrieves the presence record for a specific region and date
+      security:
+        - userHeader: []
+      tags:
+        - presence
+      parameters:
+        - name: regionId
+          in: path
+          required: true
+          description: The region ID (2-5 characters)
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 5
+        - name: date
+          in: path
+          required: true
+          description: The date in YYYY-MM-DD format
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Presence found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presence'
+        '404':
+          description: Presence not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /presence:
+    get:
+      summary: List presences
+      description: Retrieves a list of presence records with optional filtering
+      security:
+        - userHeader: []
+      tags:
+        - presence
+      parameters:
+        - name: regionIds
+          in: query
+          required: false
+          description: Filter by region IDs
+          schema:
+            type: array
+            items:
+              type: string
+              minLength: 2
+              maxLength: 5
+        - name: start
+          in: query
+          required: false
+          description: Filter by start date (inclusive)
+          schema:
+            type: string
+            format: date
+        - name: end
+          in: query
+          required: false
+          description: Filter by end date (inclusive)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of presences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Presence'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create presence
+      description: Creates a new presence record for a date range
+      security:
+        - userHeader: []
+      tags:
+        - presence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePresenceRequest'
+      responses:
+        '201':
+          description: Presence created successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete presence
+      description: Deletes presence records for a date range
+      security:
+        - userHeader: []
+      tags:
+        - presence
+      parameters:
+        - name: regionId
+          in: query
+          required: true
+          description: Region ID to delete presence for
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 5
+        - name: start
+          in: query
+          required: true
+          description: Start date of presence to delete (inclusive)
+          schema:
+            type: string
+            format: date
+        - name: end
+          in: query
+          required: true
+          description: End date of presence to delete (inclusive)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Presence deleted successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

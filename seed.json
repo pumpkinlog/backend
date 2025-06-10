@@ -1,0 +1,369 @@
+[
+    {
+        "id": "AD",
+        "name": "Andorra",
+        "type": "country",
+        "continent": "Europe",
+        "latLng": [
+            42.5063,
+            1.5211
+        ]
+    },
+    {
+        "id": "AE",
+        "name": "United Arab Emirates",
+        "type": "country",
+        "continent": "Asia",
+        "latLng": [
+            23.4241,
+            53.8478
+        ]
+    },
+    {
+        "id": "AF",
+        "name": "Afghanistan",
+        "type": "country",
+        "continent": "Asia",
+        "latLng": [
+            33.9391,
+            67.7099
+        ]
+    },
+    {
+        "id": "AG",
+        "name": "Antigua and Barbuda",
+        "type": "country",
+        "continent": "North America",
+        "latLng": [
+            17.0608,
+            -61.7964
+        ]
+    },
+    {
+        "id": "AI",
+        "name": "Anguilla",
+        "type": "country",
+        "continent": "North America",
+        "latLng": [
+            18.2206,
+            -63.0686
+        ]
+    },
+    {
+        "id": "AL",
+        "name": "Albania",
+        "type": "country",
+        "continent": "Europe",
+        "latLng": [
+            41.1533,
+            20.1683
+        ]
+    },
+    {
+        "id": "AM",
+        "name": "Armenia",
+        "type": "country",
+        "continent": "Asia",
+        "latLng": [
+            40.0691,
+            45.0382
+        ]
+    },
+    {
+        "id": "AO",
+        "name": "Angola",
+        "type": "country",
+        "continent": "Africa",
+        "latLng": [
+            -11.2027,
+            17.8739
+        ]
+    },
+    {
+        "id": "AR",
+        "name": "Argentina",
+        "type": "country",
+        "continent": "South America",
+        "latLng": [
+            -38.4161,
+            -63.6167
+        ]
+    },
+    {
+        "id": "AS",
+        "name": "American Samoa",
+        "type": "country",
+        "continent": "Oceania",
+        "latLng": [
+            -14.27,
+            -170.1322
+        ]
+    },
+    {
+        "id": "AT",
+        "name": "Austria",
+        "type": "country",
+        "continent": "Europe",
+        "latLng": [
+            47.5162,
+            14.5501
+        ]
+    },
+    {
+        "id": "AU",
+        "name": "Australia",
+        "type": "country",
+        "continent": "Oceania",
+        "latLng": [
+            -25.2744,
+            133.7751
+        ]
+    },
+    {
+        "id": "AW",
+        "name": "Aruba",
+        "type": "country",
+        "continent": "North America",
+        "latLng": [
+            12.5211,
+            -69.9687
+        ]
+    },
+    {
+        "id": "AX",
+        "name": "Åland Islands",
+        "type": "country",
+        "continent": "Europe",
+        "latLng": [
+            60.1785,
+            19.9156
+        ]
+    },
+    {
+        "id": "AZ",
+        "name": "Azerbaijan",
+        "type": "country",
+        "continent": "Asia",
+        "latLng": [
+            40.1431,
+            47.5769
+        ]
+    },
+    {
+        "id": "JE",
+        "name": "Jersey",
+        "type": "country",
+        "continent": "Europe",
+        "yearStartMonth": 1,
+        "yearStartDay": 1,
+        "latLng": [
+            49.2144,
+            -2.1312
+        ],
+        "sources": [
+            {
+                "name": "OECD Tax Residency",
+                "url": "https://www.oecd.org/content/dam/oecd/en/topics/policy-issue-focus/aeoi/jersey-residency.pdf"
+            },
+            {
+                "name": "PWC Tax Summaries",
+                "url": "https://taxsummaries.pwc.com/jersey/individual/residence"
+            }
+        ],
+        "rules": [
+            {
+                "id": "je_183_day",
+                "name": "183 Day Rule",
+                "description": "You are present for 183 days or more in a tax year.",
+                "node": {
+                    "type": "strategy",
+                    "props": {
+                        "type": "aggregate",
+                        "period": {
+                            "type": "year"
+                        },
+                        "props": {
+                            "threshold": 183
+                        }
+                    }
+                }
+            },
+            {
+                "id": "je_abode_1_night",
+                "name": "Place of abode with one night.",
+                "description": "You maintain a place of abode and stay one night in a tax year.",
+                "node": {
+                    "type": "and",
+                    "props": [
+                        {
+                            "type": "condition",
+                            "props": {
+                                "conditionId": "je_maintain_abode",
+                                "equals": true,
+                                "comparator": "eq"
+                            }
+                        },
+                        {
+                            "type": "strategy",
+                            "props": {
+                                "type": "aggregate",
+                                "period": {
+                                    "type": "year"
+                                },
+                                "props": {
+                                    "threshold": 1
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "je_average_presence",
+                "name": "Average Presence",
+                "description": "You stay for an average of 3 months per year over 4 years without a place of abode.",
+                "node": {
+                    "type": "and",
+                    "props": [
+                        {
+                            "type": "condition",
+                            "props": {
+                                "conditionId": "je_maintain_abode",
+                                "equals": false,
+                                "comparator": "eq"
+                            }
+                        },
+                        {
+                            "type": "strategy",
+                            "props": {
+                                "type": "average",
+                                "period": {
+                                    "type": "year",
+                                    "years": 4
+                                },
+                                "props": {
+                                    "threshold": 90
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "conditions": [
+            {
+                "id": "je_maintain_abode",
+                "prompt": "Do you maintain a place of abode?",
+                "type": "boolean"
+            }
+        ]
+    },
+    {
+        "id": "GG",
+        "name": "Guernsey",
+        "type": "country",
+        "continent": "Europe",
+        "yearStartMonth": 1,
+        "yearStartDay": 1,
+        "latLng": [
+            49.4657,
+            -2.5859
+        ],
+        "sources": [
+            {
+                "name": "PWC Tax Summaries",
+                "url": "https://taxsummaries.pwc.com/guernsey/individual/residence"
+            }
+        ],
+        "rules": [
+            {
+                "id": "gg_182_day",
+                "name": "182 Day Rule",
+                "description": "You are present for 182 days or more in a tax year.",
+                "node": {
+                    "type": "strategy",
+                    "props": {
+                        "type": "aggregate",
+                        "period": {
+                            "type": "year"
+                        },
+                        "props": {
+                            "threshold": 182
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "id": "US",
+        "name": "United States of America",
+        "type": "country",
+        "continent": "North America",
+        "yearStartMonth": 1,
+        "yearStartDay": 1,
+        "latLng": [
+            37.0902,
+            -95.7129
+        ],
+        "sources": [
+            {
+                "name": "IRS Substantial Presence Test",
+                "url": "https://www.irs.gov/individuals/international-taxpayers/substantial-presence-test"
+            },
+            {
+                "name": "PWC Tax Summaries",
+                "url": "https://taxsummaries.pwc.com/united-states/individual/residence"
+            }
+        ],
+        "rules": [
+            {
+                "id": "us_substantial_presence",
+                "name": "Substantial Presence Test",
+                "description": "You are present for at least 31 days in the current tax year and 183 days over the last 3 tax years.",
+                "node": {
+                    "type": "and",
+                    "props": [
+                        {
+                            "type": "strategy",
+                            "props": {
+                                "type": "aggregate",
+                                "period": {
+                                    "type": "year"
+                                },
+                                "props": {
+                                    "threshold": 31
+                                }
+                            }
+                        },
+                        {
+                            "type": "strategy",
+                            "props": {
+                                "type": "weighted",
+                                "period": {
+                                    "type": "year",
+                                    "years": 3
+                                },
+                                "props": {
+                                    "threshold": 183,
+                                    "weights": [
+                                        1.0,
+                                        0.3333333333,
+                                        0.1666666667
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "conditions": [
+            {
+                "id": "us_lawful_permanent_resident",
+                "prompt": "Are you a lawful permanent resident? (e.g. green card holders)",
+                "type": "boolean"
+            }
+        ]
+    }
+]

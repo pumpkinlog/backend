@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:alpine3.21
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pumpkinlog
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_destination=stderr
+      -c logging_collector=off
+      -c client_min_messages=log
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      
+  rabbitmq:
+    image: rabbitmq:4.1.1-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pumpkinlog:latest
+    ports:
+      - "4000:4000"
+      - "6060:6060"
+    environment:
+      - DATABASE_DSN=postgresql://postgres:password@postgres:5432/pumpkinlog
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
+    command: api
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  presence-worker:
+    image: pumpkinlog:latest
+    environment:
+      - DATABASE_DSN=postgresql://postgres:password@postgres:5432/pumpkinlog
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
+    command: worker --queue presence
+    depends_on:
+      - postgres
+      - rabbitmq
+
+volumes:
+  pgdata:
+  rabbitmq_data:
