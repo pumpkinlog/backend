@@ -36,13 +36,13 @@ func (u *User) Validate() error {
 		return ValidationError("updated at timestamp is required")
 	}
 
-	now := time.Now().UTC()
+	timestamp := time.Now().UTC()
 
-	if u.CreatedAt.After(now) {
+	if u.CreatedAt.After(timestamp) {
 		return ValidationError("created at timestamp cannot be in the future")
 	}
 
-	if u.UpdatedAt.After(now) {
+	if u.UpdatedAt.After(timestamp) {
 		return ValidationError("updated at timestamp cannot be in the future")
 	}
 
