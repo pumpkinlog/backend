@@ -9,9 +9,10 @@ import (
 )
 
 func (a *API) GetUser(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
-	user, err := a.userSvc.GetByID(r.Context(), userID)
+	user, err := a.userSvc.GetByID(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
@@ -63,7 +64,8 @@ type UpdateUserRequest struct {
 }
 
 func (a *API) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var params UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
@@ -74,7 +76,7 @@ func (a *API) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	if err := a.userSvc.Update(r.Context(), userID, params.FavoriteRegions, params.WantResidency); err != nil {
+	if err := a.userSvc.Update(ctx, userID, params.FavoriteRegions, params.WantResidency); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
 			RespondError(w, http.StatusNotFound, "user not found")

@@ -9,7 +9,8 @@ import (
 )
 
 func (a *API) EvaluateRegion(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 	regionID := domain.RegionID(r.PathValue("regionId"))
 
 	var err error
@@ -26,7 +27,7 @@ func (a *API) EvaluateRegion(w http.ResponseWriter, r *http.Request) {
 		PointInTime: pit,
 	}
 
-	evaluation, err := a.evaluationSvc.EvaluateRegion(r.Context(), userID, regionID, opts)
+	evaluation, err := a.evaluationSvc.EvaluateRegion(ctx, userID, regionID, opts)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
@@ -42,9 +43,10 @@ func (a *API) EvaluateRegion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) EvaluateRegions(w http.ResponseWriter, r *http.Request) {
-	/*userID := UserID(r)
+	/*ctx := r.Context()
+	userID := UserID(ctx)
 
-	evaluations, err := a.evaluationSvc.EvaluateRegions(r.Context(), userID)
+	evaluations, err := a.evaluationSvc.EvaluateRegions(ctx, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):

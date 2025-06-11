@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -81,4 +82,22 @@ func TestRespondJSON(t *testing.T) {
 	err := json.Unmarshal(rr.Body.Bytes(), &got)
 	require.NoError(t, err)
 	require.Equal(t, payload, got)
+}
+
+func TestUserID(t *testing.T) {
+	t.Run("found userID", func(t *testing.T) {
+		ctx := context.WithValue(context.Background(), UserIDKey, int64(123))
+		uid := UserID(ctx)
+		require.Equal(t, int64(123), uid)
+	})
+
+	t.Run("missing userID panics", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Fatal("expected panic")
+			}
+		}()
+
+		_ = UserID(context.Background())
+	})
 }

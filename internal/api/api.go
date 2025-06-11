@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -136,12 +137,15 @@ type contextKey string
 
 const UserIDKey contextKey = "userId"
 
-func UserID(r *http.Request) int64 {
-	userID, ok := r.Context().Value(UserIDKey).(int64)
+// UserID returns the authenticated user ID from the context injected by the auth middleware.
+//
+// Will panic if used on a route with no auth middleware.
+func UserID(ctx context.Context) int64 {
+	uid, ok := ctx.Value(UserIDKey).(int64)
 	if !ok {
-		// can safely panic here. Will only occur if auth middleware is not set on a route before calling.
-		panic("user ID not present in context")
+		// We can safely panic here as this will only occur if auth middleware is not set.
+		// The app should crash to prevent unauthorized access to protected resources.
+		panic("user ID is missing from context")
 	}
-
-	return userID
+	return uid
 }

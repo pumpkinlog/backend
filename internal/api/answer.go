@@ -9,10 +9,11 @@ import (
 )
 
 func (a *API) GetAnswer(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 	conditionID := domain.Code(r.PathValue("conditionId"))
 
-	answer, err := a.answerSvc.GetByID(r.Context(), userID, conditionID)
+	answer, err := a.answerSvc.GetByID(ctx, userID, conditionID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
@@ -33,7 +34,8 @@ type SubmitAnswerRequest struct {
 }
 
 func (a *API) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var params SubmitAnswerRequest
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
@@ -44,7 +46,7 @@ func (a *API) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	if err := a.answerSvc.CreateOrUpdate(r.Context(), userID, params.ConditionID, params.Value); err != nil {
+	if err := a.answerSvc.CreateOrUpdate(ctx, userID, params.ConditionID, params.Value); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrValidation):
 			RespondError(w, http.StatusBadRequest, err.Error())
@@ -59,10 +61,11 @@ func (a *API) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) DeleteAnswer(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 	conditionID := domain.Code(r.PathValue("conditionId"))
 
-	if err := a.answerSvc.Delete(r.Context(), userID, conditionID); err != nil {
+	if err := a.answerSvc.Delete(ctx, userID, conditionID); err != nil {
 		a.logger.Error("failed to delete answer", "userId", userID, "conditionId", conditionID, "error", err)
 		RespondError(w, http.StatusInternalServerError, "failed to delete answer")
 		return

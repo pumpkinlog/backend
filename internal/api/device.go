@@ -10,7 +10,8 @@ import (
 )
 
 func (a *API) GetDevice(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var err error
 	var deviceID int64
@@ -19,7 +20,7 @@ func (a *API) GetDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := a.deviceSvc.GetByID(r.Context(), userID, deviceID)
+	device, err := a.deviceSvc.GetByID(ctx, userID, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
@@ -35,9 +36,10 @@ func (a *API) GetDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) ListDevices(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
-	devices, err := a.deviceSvc.List(r.Context(), userID)
+	devices, err := a.deviceSvc.List(ctx, userID)
 	if err != nil {
 		a.logger.Error("failed to list devices", "userId", userID, "error", err)
 		RespondError(w, http.StatusInternalServerError, "failed to list devices")
@@ -56,7 +58,8 @@ type CreateDeviceRequest struct {
 }
 
 func (a *API) CreateDevice(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var params CreateDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
@@ -67,7 +70,7 @@ func (a *API) CreateDevice(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	if err := a.deviceSvc.Create(r.Context(), userID, params.Name, params.Platform, params.Model); err != nil {
+	if err := a.deviceSvc.Create(ctx, userID, params.Name, params.Platform, params.Model); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrValidation):
 			RespondError(w, http.StatusBadRequest, err.Error())
@@ -89,7 +92,8 @@ type UpdateDeviceRequest struct {
 }
 
 func (a *API) UpdateDevice(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var params UpdateDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
@@ -100,7 +104,7 @@ func (a *API) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	if err := a.deviceSvc.Update(r.Context(), userID, params.DeviceID, params.Name, params.Token, params.Active); err != nil {
+	if err := a.deviceSvc.Update(ctx, userID, params.DeviceID, params.Name, params.Token, params.Active); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
 			RespondError(w, http.StatusNotFound, "device not found")
@@ -117,7 +121,8 @@ func (a *API) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) DeleteDevice(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var err error
 	var deviceID int64
@@ -126,7 +131,7 @@ func (a *API) DeleteDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.deviceSvc.Delete(r.Context(), userID, deviceID); err != nil {
+	if err := a.deviceSvc.Delete(ctx, userID, deviceID); err != nil {
 		a.logger.Error("failed to delete device", "deviceId", deviceID, "error", err)
 		RespondError(w, http.StatusInternalServerError, "failed to delete device")
 		return

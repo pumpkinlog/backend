@@ -10,7 +10,8 @@ import (
 )
 
 func (a *API) GetPresence(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 	regionID := domain.RegionID(r.PathValue("regionId"))
 
 	date, err := time.Parse(time.DateOnly, r.PathValue("date"))
@@ -19,7 +20,7 @@ func (a *API) GetPresence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presence, err := a.presenceSvc.GetByID(r.Context(), userID, regionID, date)
+	presence, err := a.presenceSvc.GetByID(ctx, userID, regionID, date)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrNotFound):
@@ -35,7 +36,8 @@ func (a *API) GetPresence(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) ListPresences(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	regionIDs := make([]domain.RegionID, 0)
 	for _, rid := range r.URL.Query()["regionId"] {
@@ -69,7 +71,7 @@ func (a *API) ListPresences(w http.ResponseWriter, r *http.Request) {
 		End:       end,
 	}
 
-	precences, err := a.presenceSvc.List(r.Context(), userID, filter)
+	precences, err := a.presenceSvc.List(ctx, userID, filter)
 	if err != nil {
 		a.logger.Error("failed to list presences", "userId", userID, "regionIds", regionIDs, "start", start, "end", end, "error", err)
 		RespondError(w, http.StatusInternalServerError, "failed to list presences")
@@ -87,7 +89,8 @@ type CreatePresencesRequest struct {
 }
 
 func (a *API) CreatePresence(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 
 	var params CreatePresencesRequest
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
@@ -110,7 +113,7 @@ func (a *API) CreatePresence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.presenceSvc.Create(r.Context(), userID, params.RegionID, params.DeviceID, start, end); err != nil {
+	if err := a.presenceSvc.Create(ctx, userID, params.RegionID, params.DeviceID, start, end); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrValidation):
 		default:
@@ -124,7 +127,8 @@ func (a *API) CreatePresence(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) DeletePresence(w http.ResponseWriter, r *http.Request) {
-	userID := UserID(r)
+	ctx := r.Context()
+	userID := UserID(ctx)
 	regionID := domain.RegionID(r.URL.Query().Get("regionId"))
 
 	start, err := time.Parse(time.DateOnly, r.URL.Query().Get("start"))
@@ -139,7 +143,7 @@ func (a *API) DeletePresence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.presenceSvc.Delete(r.Context(), userID, regionID, start, end); err != nil {
+	if err := a.presenceSvc.Delete(ctx, userID, regionID, start, end); err != nil {
 		a.logger.Error("failed to delete presence", "userId", userID, "regionId", regionID, "start", start, "end", end, "error", err)
 		RespondError(w, http.StatusInternalServerError, "failed to delete presence")
 		return
