@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -37,37 +36,37 @@ func (p Platform) Valid() bool {
 func (d *Device) Validate() error {
 
 	if d.UserID < 0 {
-		return fmt.Errorf("%w: user ID is invalid", ErrValidation)
+		return ValidationError("user ID is required")
 	}
 
 	if d.Name == "" {
-		return fmt.Errorf("%w: name is required", ErrValidation)
+		return ValidationError("name is required")
 	}
 
 	if !d.Platform.Valid() {
-		return fmt.Errorf("%w: platform is invalid", ErrValidation)
+		return ValidationError("platform is invalid")
 	}
 
 	if d.Model == "" {
-		return fmt.Errorf("%w: model is required", ErrValidation)
+		return ValidationError("model is required")
 	}
 
 	if d.CreatedAt.IsZero() {
-		return fmt.Errorf("%w: created at timestamp is invalid", ErrValidation)
+		return ValidationError("created at timestamp is invalid")
 	}
 
 	if d.UpdatedAt.IsZero() {
-		return fmt.Errorf("%w: updated at timestamp is invalid", ErrValidation)
+		return ValidationError("updated at timestamp is invalid")
 	}
 
 	now := time.Now().UTC()
 
 	if d.CreatedAt.After(now) {
-		return fmt.Errorf("%w: created at timestamp cannot be in the future", ErrValidation)
+		return ValidationError("created at timestamp cannot be in the future")
 	}
 
 	if d.UpdatedAt.After(now) {
-		return fmt.Errorf("%w: updated at timestamp cannot be in the future", ErrValidation)
+		return ValidationError("updated at timestamp cannot be in the future")
 	}
 
 	return nil

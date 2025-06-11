@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -18,7 +17,7 @@ type Presence struct {
 func (p *Presence) Validate() error {
 
 	if p.UserID < 0 {
-		return fmt.Errorf("%w: user ID is invalid", ErrValidation)
+		return ValidationError("user ID is required")
 	}
 
 	if err := p.RegionID.Validate(); err != nil {
@@ -26,29 +25,29 @@ func (p *Presence) Validate() error {
 	}
 
 	if p.Date.After(time.Now().UTC()) {
-		return fmt.Errorf("%w: date cannot be in the future", ErrValidation)
+		return ValidationError("date cannot be in the future")
 	}
 
 	if p.DeviceID != nil && *p.DeviceID == "" {
-		return fmt.Errorf("%w: device ID cannot be an empty string", ErrValidation)
+		return ValidationError("device ID cannot be empty")
 	}
 
 	if p.CreatedAt.IsZero() {
-		return fmt.Errorf("%w: created at timestamp is invalid", ErrValidation)
+		return ValidationError("created at timestamp is required")
 	}
 
 	if p.UpdatedAt.IsZero() {
-		return fmt.Errorf("%w: updated at timestamp is invalid", ErrValidation)
+		return ValidationError("updated at timestamp is required")
 	}
 
 	now := time.Now().UTC()
 
 	if p.CreatedAt.After(now) {
-		return fmt.Errorf("%w: created at timestamp cannot be in the future", ErrValidation)
+		return ValidationError("created at timestamp cannot be in the future")
 	}
 
 	if p.UpdatedAt.After(now) {
-		return fmt.Errorf("%w: updated at timestamp cannot be in the future", ErrValidation)
+		return ValidationError("updated at timestamp cannot be in the future")
 	}
 
 	return nil

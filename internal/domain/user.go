@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -19,33 +18,33 @@ type User struct {
 func (u *User) Validate() error {
 
 	if u.ID < 0 {
-		return fmt.Errorf("%w: id is invalid", ErrValidation)
+		return ValidationError("user ID is required")
 	}
 
 	if len(u.FavoriteRegions) > maxRegions {
-		return fmt.Errorf("%w: favorite regions cannot be greater than %d", ErrValidation, maxRegions)
+		return ValidationError("favorite regions cannot be greater than %d", maxRegions)
 	}
 
 	if len(u.WantResidency) > maxRegions {
-		return fmt.Errorf("%w: want residency cannot be greater than %d", ErrValidation, maxRegions)
+		return ValidationError(" want residency cannot be greater than %d", maxRegions)
 	}
 
 	if u.CreatedAt.IsZero() {
-		return fmt.Errorf("%w: created at timestamp is invalid", ErrValidation)
+		return ValidationError("created at timestamp is required")
 	}
 
 	if u.UpdatedAt.IsZero() {
-		return fmt.Errorf("%w: updated at timestamp is invalid", ErrValidation)
+		return ValidationError("updated at timestamp is required")
 	}
 
 	now := time.Now().UTC()
 
 	if u.CreatedAt.After(now) {
-		return fmt.Errorf("%w: created at timestamp cannot be in the future", ErrValidation)
+		return ValidationError("created at timestamp cannot be in the future")
 	}
 
 	if u.UpdatedAt.After(now) {
-		return fmt.Errorf("%w: updated at timestamp cannot be in the future", ErrValidation)
+		return ValidationError("updated at timestamp cannot be in the future")
 	}
 
 	return nil

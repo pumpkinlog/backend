@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -72,27 +71,27 @@ func (r *Region) Validate() error {
 	}
 
 	if r.Name == "" {
-		return fmt.Errorf("%w: name is required", ErrValidation)
+		return ValidationError("name is required")
 	}
 
 	if !r.Type.Valid() {
-		return fmt.Errorf("%w: type is required", ErrValidation)
+		return ValidationError("type is required")
 	}
 
 	if !r.Continent.Valid() {
-		return fmt.Errorf("%w: continent is required", ErrValidation)
+		return ValidationError("continent is required")
 	}
 
 	if r.YearStartMonth < 1 || r.YearStartMonth > 12 {
-		return fmt.Errorf("%w: year start month is invalid", ErrValidation)
+		return ValidationError("year start month must be between 1-12")
 	}
 
 	if r.YearStartDay < 1 || r.YearStartDay > 31 {
-		return fmt.Errorf("%w: year start day is invalid", ErrValidation)
+		return ValidationError("year start day must be between 1-31")
 	}
 
 	if r.Sources == nil {
-		return fmt.Errorf("%w: sources cannot be empty", ErrValidation)
+		return ValidationError("sources cannot be empty")
 	}
 
 	return nil

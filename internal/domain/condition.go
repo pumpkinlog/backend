@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 )
 
 type ConditionType string
@@ -41,11 +40,11 @@ func (c *Condition) Validate() error {
 	}
 
 	if c.Prompt == "" {
-		return fmt.Errorf("%w: prompt cannot be empty", ErrValidation)
+		return ValidationError("prompt is required")
 	}
 
 	if !c.Type.Valid() {
-		return fmt.Errorf("%w: invalid condition type: %s", ErrValidation, c.Type)
+		return ValidationError("invalid condition type: %s", c.Type)
 	}
 
 	return nil
