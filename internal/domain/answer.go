@@ -15,8 +15,8 @@ type Answer struct {
 }
 
 func (a *Answer) Validate() error {
-	if a.UserID < 0 {
-		return ValidationError("user ID is invalid")
+	if a.UserID <= 0 {
+		return ValidationError("user ID is required")
 	}
 
 	if err := a.ConditionID.Validate(); err != nil {

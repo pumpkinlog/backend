@@ -16,8 +16,7 @@ type User struct {
 }
 
 func (u *User) Validate() error {
-
-	if u.ID < 0 {
+	if u.ID <= 0 {
 		return ValidationError("user ID is required")
 	}
 

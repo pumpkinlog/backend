@@ -15,8 +15,7 @@ type Presence struct {
 }
 
 func (p *Presence) Validate() error {
-
-	if p.UserID < 0 {
+	if p.UserID <= 0 {
 		return ValidationError("user ID is required")
 	}
 
@@ -40,13 +39,13 @@ func (p *Presence) Validate() error {
 		return ValidationError("updated at timestamp is required")
 	}
 
-	now := time.Now().UTC()
+	timestamp := time.Now().UTC()
 
-	if p.CreatedAt.After(now) {
+	if p.CreatedAt.After(timestamp) {
 		return ValidationError("created at timestamp cannot be in the future")
 	}
 
-	if p.UpdatedAt.After(now) {
+	if p.UpdatedAt.After(timestamp) {
 		return ValidationError("updated at timestamp cannot be in the future")
 	}
 

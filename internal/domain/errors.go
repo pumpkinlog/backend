@@ -13,5 +13,4 @@ var (
 
 func ValidationError(msg string, args ...any) error {
 	return fmt.Errorf("%w: %s", ErrValidation, fmt.Sprintf(msg, args...))
-
 }

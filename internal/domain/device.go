@@ -34,8 +34,7 @@ func (p Platform) Valid() bool {
 }
 
 func (d *Device) Validate() error {
-
-	if d.UserID < 0 {
+	if d.UserID <= 0 {
 		return ValidationError("user ID is required")
 	}
 
