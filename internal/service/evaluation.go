@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/pumpkinlog/backend/internal/domain"
 	"github.com/pumpkinlog/backend/internal/engine"
@@ -116,19 +117,43 @@ func (s *EvaluationService) EvaluateRegion(ctx context.Context, userID int64, re
 }
 
 func (s *EvaluationService) buildEvaluationContext(ctx context.Context, userID int64, regionID domain.RegionID, pit time.Time) (*domain.EvaluationContext, error) {
-	region, err := s.regionRepo.GetByID(ctx, regionID)
-	if err != nil {
-		return nil, fmt.Errorf("get region: %w", err)
-	}
+	g, groupCtx := errgroup.WithContext(ctx)
 
-	rules, err := s.ruleRepo.ListByRegionID(ctx, regionID)
-	if err != nil {
-		return nil, fmt.Errorf("list rules by region ID: %w", err)
-	}
+	var (
+		region  *domain.Region
+		rules   []*domain.Rule
+		answers []*domain.Answer
+	)
 
-	answers, err := s.answerRepo.ListByRegionID(ctx, userID, region.ID)
-	if err != nil {
-		return nil, fmt.Errorf("list answers by region ID: %w", err)
+	g.Go(func() error {
+		r, err := s.regionRepo.GetByID(groupCtx, regionID)
+		if err != nil {
+			return fmt.Errorf("get region: %w", err)
+		}
+		region = r
+		return nil
+	})
+
+	g.Go(func() error {
+		r, err := s.ruleRepo.ListByRegionID(groupCtx, regionID)
+		if err != nil {
+			return fmt.Errorf("list rules by region ID: %w", err)
+		}
+		rules = r
+		return nil
+	})
+
+	g.Go(func() error {
+		a, err := s.answerRepo.ListByRegionID(groupCtx, userID, regionID)
+		if err != nil {
+			return fmt.Errorf("list answers by region ID: %w", err)
+		}
+		answers = a
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("load evaluation context data: %w", err)
 	}
 
 	start, end, err := engine.ComputeMaxPeriod(pit, region, rules)
